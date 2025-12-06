@@ -5,11 +5,73 @@
   <title>Matula Tree Plotter</title>
 
   <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.js"></script>
+
+  <script>
+  async function main() {
+    // 1. Load Pyodide
+    let pyodide = await loadPyodide();
+
+    // 2. Fetch the Python file from your repo
+    // If the file is in the same repo and same branch:
+    let response = await fetch('matula.py'); // adjust path if in a folder
+    let code = await response.text();
+
+    // 3. Run the Python code in Pyodide
+    pyodide.runPython(code);
+
+    // 4. Call a function from the loaded Python code
+    // Example: calling square(10) if your functions.py has `def square(x): ...`
+    let result = pyodide.runPython('vertices(10)');
+
+    // 5. Display result in HTML
+    document.getElementById('output').textContent = 'Result: ' + result;
+    }
+
+    // Run the async function
+    main();
+  </script>
+
 
   <style>
     body {
       font-family: Arial, sans-serif;
       margin: 20px;
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+    }
+
+    /* LEFT PANEL: PROPERTIES TABLE */
+    #propertiesPanel {
+      width: 300px;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+      padding: 10px;
+      height: 500px;
+      overflow-y: auto;
+    }
+    #propertiesPanel h3 {
+      text-align: center;
+      margin-top: 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid #aaa;
+      padding: 5px;
+      text-align: left;
+    }
+    th {
+      background: #f0f0f0;
+    }
+
+    /* RIGHT PANEL: TREE AREA */
+    #mainPanel {
+      flex-grow: 1;
     }
     #cy {
       width: 600px;
@@ -18,22 +80,40 @@
       border-radius: 6px;
       margin-top: 15px;
     }
-    #saveBtn {
-      margin-left: 10px;
-    }
   </style>
 </head>
 
 <body>
 
-<h2>Matula Numbers of Rooted Trees</h2>
+<!-- LEFT SIDE: PROPERTIES TABLE -->
+<div id="propertiesPanel">
+  <h3>Properties</h3>
 
-<p>Enter a natural number:</p>
-<input id="numInput" type="number" min="1" style="width:150px;">
-<button onclick="plot()">Plot Tree</button>
-<button id="saveBtn" onclick="saveImage()">Save Plot</button>
+  <table id="propTable">
+    <thead>
+      <tr>
+        <th>S/N</th>
+        <th>Name</th>
+        <th>Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Rows are inserted dynamically -->
+    </tbody>
+  </table>
+</div>
 
-<div id="cy"></div>
+<!-- RIGHT SIDE: TREE + CONTROLS -->
+<div id="mainPanel">
+  <h2>Matula Number → Rooted Tree (Interactive)</h2>
+
+  <p>Enter a natural number:</p>
+  <input id="numInput" type="number" min="1" value="30" style="width:150px;">
+  <button onclick="plot()">Plot Tree</button>
+  <button onclick="saveImage()">Save Plot</button>
+
+  <div id="cy"></div>
+</div>
 
 <script>
 /* ----------------------------------------------------------
@@ -75,7 +155,7 @@ function matulaTree(n) {
 }
 
 /* ----------------------------------------------------------
-   CONVERT TO FIXED-POSITION NODES (VERTICAL TREE)
+   FIXED POSITION TREE LAYOUT (VERTICAL)
 ---------------------------------------------------------- */
 function toCytoscapeElements(tree) {
   let elements = [];
@@ -98,13 +178,11 @@ function toCytoscapeElements(tree) {
         data: { source: nodeId, target: childId }
       });
     });
-
     return nodeId;
   }
 
   traverse(tree);
 
-  // Position nodes in neat vertical layers
   const xSpacing = 80;
   const ySpacing = 90;
 
@@ -122,14 +200,13 @@ function toCytoscapeElements(tree) {
 }
 
 /* ----------------------------------------------------------
-   RENDER CLEAN VERTICAL TREE (NO ARROWS)
+   RENDER TREE
 ---------------------------------------------------------- */
-let cy;  // keep global reference for saving
+let cy;
 
 function renderTree(elements) {
   cy = cytoscape({
     container: document.getElementById('cy'),
-
     elements: elements,
     layout: { name: 'preset' },
 
@@ -153,34 +230,76 @@ function renderTree(elements) {
         style: {
           'width': 2,
           'line-color': '#444',
-          'curve-style': 'straight'   /* straight non-directed edges */
+          'curve-style': 'straight'
         }
       }
     ],
 
-    boxSelectionEnabled: false,
     userZoomingEnabled: true,
     userPanningEnabled: true
   });
 }
 
 /* ----------------------------------------------------------
-   SAVE / DOWNLOAD THE CURRENT PLOT
+   DUMMY PROPERTY FUNCTIONS
+   (You will later replace these with real metrics)
+---------------------------------------------------------- */
+function computeNodeCount(tree) {
+  return "dummy node count";
+}
+
+function computeTreeHeight(tree) {
+  return "dummy height";
+}
+
+function computePrimeFactors(tree) {
+  return "dummy factorization";
+}
+
+function computeBranchingFactor(tree) {
+  return "dummy branching";
+}
+
+/* ----------------------------------------------------------
+   FILL PROPERTIES TABLE
+---------------------------------------------------------- */
+function updateProperties(tree) {
+  const table = document.querySelector("#propTable tbody");
+  table.innerHTML = "";
+
+  const metrics = [
+    { name: "Number of nodes", value: computeNodeCount(tree) },
+    { name: "Tree height", value: computeTreeHeight(tree) },
+    { name: "Prime factors", value: computePrimeFactors(tree) },
+    { name: "Branching factor", value: computeBranchingFactor(tree) },
+  ];
+
+  metrics.forEach((m, i) => {
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+      <td>${i + 1}</td>
+      <td>${m.name}</td>
+      <td>${m.value}</td>
+    `;
+
+    table.appendChild(row);
+  });
+}
+
+/* ----------------------------------------------------------
+   SAVE IMAGE
 ---------------------------------------------------------- */
 function saveImage() {
   if (!cy) return;
 
-  const png = cy.png({
-    output: 'blob',
-    full: true,
-    scale: 2
-  });
+  const png = cy.png({ output: 'blob', full: true, scale: 2 });
 
   const url = URL.createObjectURL(png);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = "matula_tree.png";
-  link.click();
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = "matula_tree.png";
+  a.click();
   URL.revokeObjectURL(url);
 }
 
@@ -190,14 +309,19 @@ function saveImage() {
 function plot() {
   const n = parseInt(document.getElementById("numInput").value);
   const tree = matulaTree(n);
+
+  updateProperties(tree);
+
   const elements = toCytoscapeElements(tree);
   renderTree(elements);
 }
 
-plot();
+plot(); // auto-run
 </script>
 
 </body>
 </html>
+
+
 
 
