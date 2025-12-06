@@ -5,33 +5,6 @@
   <title>Matula Tree Plotter</title>
 
   <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.js"></script>
-
-  <script>
-  async function main() {
-    // 1. Load Pyodide
-    let pyodide = await loadPyodide();
-
-    // 2. Fetch the Python file from your repo
-    // If the file is in the same repo and same branch:
-    let response = await fetch('tree_statistics.py'); // adjust path if in a folder
-    let code = await response.text();
-
-    // 3. Run the Python code in Pyodide
-    pyodide.runPython(code);
-
-    // 4. Call a function from the loaded Python code
-    // Example: calling square(10) if your functions.py has `def square(x): ...`
-    // let result = pyodide.runPython('vertices(10)');
-
-    // 5. Display result in HTML
-    document.getElementById('output').textContent = 'Result: ' + result;
-    }
-
-    // Run the async function
-    main();
-  </script>
-
 
   <style>
     body {
@@ -244,23 +217,21 @@ function renderTree(elements) {
    DUMMY PROPERTY FUNCTIONS
    (You will later replace these with real metrics)
 ---------------------------------------------------------- */
-function computefunction(x) {
-    return pyodide.runPython(`vertices(${x})`);
+function computeNodeCount(tree) {
+  return "dummy node count";
 }
 
-function computefunction(x) {
-    return pyodide.runPython(`edges(${x})`);
+function computeTreeHeight(tree) {
+  return "dummy height";
 }
 
-function computefunction(x) {
-    return pyodide.runPython(`height(${x})`);
+function computePrimeFactors(tree) {
+  return "dummy factorization";
 }
 
-
-function computefunction(x) {
-    return pyodide.runPython(`height(${x})`);
+function computeBranchingFactor(tree) {
+  return "dummy branching";
 }
-
 
 /* ----------------------------------------------------------
    FILL PROPERTIES TABLE
@@ -270,10 +241,10 @@ function updateProperties(tree) {
   table.innerHTML = "";
 
   const metrics = [
-    { name: "Number of vertices", value: vertices(${x}) },
-    { name: "Number of edges", value: edges(${x}) },
-    { name: "Height", value: height(${x}) },
-    { name: "No. of branching vertices", value: number_branching_vertices(${x}) },
+    { name: "Number of nodes", value: computeNodeCount(tree) },
+    { name: "Tree height", value: computeTreeHeight(tree) },
+    { name: "Prime factors", value: computePrimeFactors(tree) },
+    { name: "Branching factor", value: computeBranchingFactor(tree) },
   ];
 
   metrics.forEach((m, i) => {
@@ -323,8 +294,3 @@ plot(); // auto-run
 
 </body>
 </html>
-
-
-
-
-
