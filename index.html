@@ -217,22 +217,22 @@ function updatePropertiesFromMetrics(n) {
   const rows = [
     ['Vertices', metrics.vertices],
     ['Leaves', metrics.leaves],
-    ['Pendent vertices', metrics.pendentVertices],
     ['Edges', metrics.edges],
-    ['Number of root subtrees', metrics.numberRootSubtrees],
-    ['Number of subtrees', metrics.numberSubtrees],
-    ['Branching vertices', metrics.numberBranchingVertices],
-    ['Sibling pairs', metrics.numberSiblingPairs],
+    ['Diameter', metrics.diameter],
     ['Height', metrics.height],
     ['Eccentricity of root', metrics.eccentricityOfRoot],
+    ['Pendent vertices', metrics.pendentVertices],
+    ['Branching vertices', metrics.numberBranchingVertices],
+    ['Number of subtrees', metrics.numberSubtrees],
+    ['Number of root subtrees', metrics.numberRootSubtrees],
+    ['Sibling pairs', metrics.numberSiblingPairs],
     ['Level of lowest leaf', metrics.levelOfLowestLeaf],
     ['Path length', metrics.pathLength],
     ['External path length', metrics.externalPathLength],
     ['Internal path length', metrics.internalPathLength],
-    ['Diameter', metrics.diameter],
     ['Visitation length', metrics.visitationLength],
-    ['Max vertex degree', metrics.maximumVertexDegree],
-    ['# prime factors (with multiplicity)', metrics.numberOfPrimeFactors]
+    ['Maximum vertex degree', metrics.maximumVertexDegree],
+    ['Number of branches (also, the # of prime factors of n with multiplicity)', metrics.numberOfPrimeFactors]
   ];
 
   rows.forEach((r, i) => {
