@@ -178,29 +178,30 @@ function renderTree(elements) {
     elements: elements,
     layout: { name: 'preset' },
     style: [
-      {
-        selector: 'node',
-        style: {
-          'background-color': '#4A8CF7',
-          'width': 28,
-          'height': 28,
-          'label': 'data(label)',
-          'color': 'white',
-          'font-size': 12,
-          'text-valign': 'center',
-          'text-outline-color': '#4A8CF7',
-          'text-outline-width': 2
-        }
-      },
-      {
-        selector: 'edge',
-        style: {
-          'width': 2,
-          'line-color': '#444',
-          'curve-style': 'straight'
-        }
-      }
-    ],
+  {
+    selector: 'node',
+    style: {
+      'background-color': 'white',     // removes the blue fill
+      'border-width': 2,
+      'border-color': 'black',         // black outline
+      'width': 28,
+      'height': 28,
+      'label': 'data(label)',
+      'color': 'black',                // label in black
+      'font-size': 12,
+      'text-valign': 'center',
+      'text-outline-width': 0          // ensure no outline color around text
+    }
+  },
+  {
+    selector: 'edge',
+    style: {
+      'width': 2,
+      'line-color': 'black',           // edges black
+      'curve-style': 'straight'
+    }
+  }
+],
     userZoomingEnabled: true,
     userPanningEnabled: true
   });
