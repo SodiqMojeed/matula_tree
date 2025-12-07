@@ -247,7 +247,7 @@ function updatePropertiesFromMetrics(n) {
    ---------------------- */
 function saveImage() {
   if (!cy) return;
-  const pngBlob = cy.png({ output: 'blob', full: true, scale: 2 });
+  const pngBlob = cy.png({ output: 'blob', full: true, scale: 2, bg: 'white' });
   const url = URL.createObjectURL(pngBlob);
   const a = document.createElement('a');
   a.href = url;
