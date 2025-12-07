@@ -78,18 +78,16 @@
     <tbody></tbody>
   </table>
 
-  <p class="note">
-    Metrics are computed directly from the Matula number.
-  </p>
+  <p class="note">Metrics computed directly from integer n (Matula correspondence).</p>
 </div>
 
-<!-- RIGHT SIDE -->
+<!-- RIGHT SIDE: TREE + CONTROLS -->
 <div id="mainPanel">
 
-  <!-- CENTERED HEADER + INPUTS -->
+  <!-- TOP CENTERED CONTROLS -->
   <div style="text-align:center;">
     <h2>Generate Rooted Trees from their Matula Numbers</h2>
-    <h4>(Move the vertices to improve the plot if necessary)</h4>
+    <h4>(Move the vertices to improve the plots if necessary.)</h4>
 
     <label>Enter a Natural Number: </label>
     <input id="numInput" type="number" min="1" value="100" style="width:160px;">
@@ -98,12 +96,19 @@
     <button id="centerBtn">Recenter Layout</button>
   </div>
 
-  <!-- PLOT AREA MUST BE OUTSIDE THE CENTERED DIV -->
+  <!-- THE PLOT AREA MUST BE OUTSIDE THE CENTERED DIV -->
   <div id="cy"></div>
 
 </div>
 
 <script>
+// ============ Existing JavaScript exactly as before ============
+// (Your script stays unchanged — DO NOT duplicate cy or input/button IDs)
+// Just keep everything starting from:  /* ---------------------- Matula tree builder ...
+</script>
+
+</body>
+
 /* ----------------------
    Matula tree builder (same as before)
    ---------------------- */
