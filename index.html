@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Matula Tree Plotter</title>
+
+  <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+  <!-- load our generated metrics file -->
+  <script src="metrics.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+    }
+
+    /* LEFT PANEL: PROPERTIES TABLE */
+    #propertiesPanel {
+      width: 320px;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+      padding: 10px;
+      height: 560px;
+      overflow-y: auto;
+    }
+    #propertiesPanel h3 {
+      text-align: center;
+      margin-top: 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      border: 1px solid #aaa;
+      padding: 6px;
+      text-align: left;
+    }
+    th {
+      background: #f0f0f0;
+    }
+
+    /* RIGHT PANEL: TREE AREA */
+    #mainPanel {
+      flex-grow: 1;
+    }
+    #cy {
+      width: 680px;
+      height: 560px;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+      margin-top: 8px;
+    }
+
+    .controls { margin-bottom: 8px; }
+    .note { font-size: 12px; color: #555; margin-top: 6px; }
+  </style>
+</head>
+
+<body>
+
+<!-- LEFT SIDE: PROPERTIES TABLE -->
+<div id="propertiesPanel">
+  <h3>Properties</h3>
+
+  <table id="propTable">
+    <thead>
+      <tr>
+        <th>S/N</th>
+        <th>Name</th>
+        <th>Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Rows are inserted dynamically -->
+    </tbody>
+  </table>
+
+  <p class="note">Metrics computed directly from integer n (Matula correspondence).</p>
+</div>
+
+<!-- RIGHT SIDE: TREE + CONTROLS -->
+<div id="mainPanel">
+  <h2>Matula Number → Rooted Tree (Interactive)</h2>
+
+  <div class="controls">
+    <label>Enter a natural number: </label>
+    <input id="numInput" type="number" min="1" value="30" style="width:160px;">
+    <button id="plotBtn">Plot Tree</button>
+    <button id="saveBtn">Save Plot</button>
+    <button id="centerBtn">Recenter Layout</button>
+  </div>
+
+  <div id="cy"></div>
+</div>
+
+<script>
+/* ----------------------
+   Matula tree builder (same as before)
+   ---------------------- */
+function isPrimeLocal(n) {
+  return window.Metrics && window.Metrics.isPrime ? window.Metrics.isPrime(n) : (function(){
+    if (n<2) return false;
+    for (let i=2;i*i<=n;i++) if(n%i===0) return false;
+    return true;
+  })();
+}
+
+function primeIndexLocal(p) {
+  return window.Metrics && window.Metrics.primePosition ? window.Metrics.primePosition(p) : null;
+}
+
+function matulaTree(n) {
+  if (n === 1) return { value: 1, children: [] };
+  if (isPrimeLocal(n)) {
+    const k = primeIndexLocal(n);
+    return { value: n, children: [matulaTree(k)] };
+  }
+  for (let a = 2; a * a <= n; a++) {
+    if (n % a === 0) {
+      const b = n / a;
+      const left = matulaTree(a);
+      const right = matulaTree(b);
+      return { value: n, children: [...left.children, ...right.children] };
+    }
+  }
+}
+
+/* ----------------------
+   Cytoscape helper code (preset positions for vertical layout)
+   ---------------------- */
+let cy;
+function toCytoscapeElements(tree) {
+  let elements = [];
+  let id = 0;
+  const levels = [];
+  function traverse(node, depth = 0) {
+    const nodeId = "n" + (id++);
+    if (!levels[depth]) levels[depth] = [];
+    levels[depth].push(nodeId);
+    elements.push({ data: { id: nodeId, label: node.value } });
+    node.children.forEach(child => {
+      const childId = traverse(child, depth + 1);
+      elements.push({ data: { source: nodeId, target: childId } });
+    });
+    return nodeId;
+  }
+  traverse(tree);
+
+  const xSpacing = 80;
+  const ySpacing = 90;
+  levels.forEach((levelNodes, depth) => {
+    const startX = -(levelNodes.length - 1) * xSpacing / 2;
+    levelNodes.forEach((nodeId, i) => {
+      const e = elements.find(e => e.data && e.data.id === nodeId);
+      if (e) e.position = { x: startX + i * xSpacing, y: depth * ySpacing };
+    });
+  });
+  return elements;
+}
+
+function renderTree(elements) {
+  if (cy) cy.destroy();
+  cy = cytoscape({
+    container: document.getElementById('cy'),
+    elements: elements,
+    layout: { name: 'preset' },
+    style: [
+      {
+        selector: 'node',
+        style: {
+          'background-color': '#4A8CF7',
+          'width': 28,
+          'height': 28,
+          'label': 'data(label)',
+          'color': 'white',
+          'font-size': 12,
+          'text-valign': 'center',
+          'text-outline-color': '#4A8CF7',
+          'text-outline-width': 2
+        }
+      },
+      {
+        selector: 'edge',
+        style: {
+          'width': 2,
+          'line-color': '#444',
+          'curve-style': 'straight'
+        }
+      }
+    ],
+    userZoomingEnabled: true,
+    userPanningEnabled: true
+  });
+}
+
+/* ----------------------
+   Hook metrics.js: compute all metrics and update table
+   ---------------------- */
+function updatePropertiesFromMetrics(n) {
+  const tbody = document.querySelector('#propTable tbody');
+  tbody.innerHTML = '';
+
+  // compute all metrics using window.Metrics.computeAllMetrics
+  let metrics;
+  try {
+    metrics = window.Metrics.computeAllMetrics(n);
+  } catch (e) {
+    metrics = { error: e.message };
+  }
+
+  // Define the display order and readable names
+  const rows = [
+    ['Vertices', metrics.vertices],
+    ['Leaves', metrics.leaves],
+    ['Pendent vertices', metrics.pendentVertices],
+    ['Edges', metrics.edges],
+    ['Number of root subtrees', metrics.numberRootSubtrees],
+    ['Number of subtrees', metrics.numberSubtrees],
+    ['Branching vertices', metrics.numberBranchingVertices],
+    ['Sibling pairs', metrics.numberSiblingPairs],
+    ['Height', metrics.height],
+    ['Eccentricity of root', metrics.eccentricityOfRoot],
+    ['Level of lowest leaf', metrics.levelOfLowestLeaf],
+    ['Path length', metrics.pathLength],
+    ['External path length', metrics.externalPathLength],
+    ['Internal path length', metrics.internalPathLength],
+    ['Diameter', metrics.diameter],
+    ['Visitation length', metrics.visitationLength],
+    ['Max vertex degree', metrics.maximumVertexDegree],
+    ['# prime factors (with multiplicity)', metrics.numberOfPrimeFactors]
+  ];
+
+  rows.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${i+1}</td><td>${r[0]}</td><td>${(r[1] === undefined) ? '-' : r[1]}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+/* ----------------------
+   Save image (PNG)
+   ---------------------- */
+function saveImage() {
+  if (!cy) return;
+  const pngBlob = cy.png({ output: 'blob', full: true, scale: 2 });
+  const url = URL.createObjectURL(pngBlob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `matula_${document.getElementById('numInput').value || 'tree'}.png`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function recenterLayout() {
+  if (!cy) return;
+  cy.fit();
+}
+
+/* ----------------------
+   Main plot function
+   ---------------------- */
+function plot() {
+  const nVal = parseInt(document.getElementById('numInput').value, 10);
+  if (!Number.isInteger(nVal) || nVal < 1) {
+    alert("Enter a positive integer (n >= 1)");
+    return;
+  }
+
+  // Update properties (computes metrics via metrics.js)
+  updatePropertiesFromMetrics(nVal);
+
+  // Build tree and render
+  const tree = matulaTree(nVal);
+  const elements = toCytoscapeElements(tree);
+  renderTree(elements);
+}
+
+document.getElementById('plotBtn').addEventListener('click', plot);
+document.getElementById('saveBtn').addEventListener('click', saveImage);
+document.getElementById('centerBtn').addEventListener('click', recenterLayout);
+
+// Auto plot on load
+plot();
+</script>
+
+</body>
+</html>
