@@ -297,17 +297,17 @@ document.getElementById("toggleLabelsBtn").addEventListener("click", function ()
 
   if (!cy) return;
 
-  // 1. Hide all labels
+  // 1. Hide all labels (the correct reliable way)
   cy.nodes().forEach(n => {
-    n.style("label", "");
+    n.style("text-opacity", 0);   // makes labels invisible
   });
 
-  // 2. Color only the root node black
-  // Root node is id 'n0' because your tree builder creates it first.
+  // 2. Change the root node (n0) to black
   const root = cy.$('#n0');
   if (root) {
     root.style("background-color", "black");
     root.style("border-color", "black");
+    root.style("color", "black");   // root label also hidden
   }
 });
 
