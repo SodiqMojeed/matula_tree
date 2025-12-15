@@ -521,7 +521,13 @@ function computeAllMetrics(n) {
     diameter: diameter(n),
     visitationLength: visitationLength(n),
     maximumVertexDegree: maximumVertexDegree(n),
-    numberOfPrimeFactors: numberOfPrimeFactors(n)
+    numberOfPrimeFactors: numberOfPrimeFactors(n),
+    WienerIndex: WienerIndex(n),
+    FirstZagrebIndex: FirstZagrebIndex(n),
+    SecondZagrebIndex: SecondZagrebIndex(n),
+    NarumiKatayama: NarumiKatayama(n),
+    FMZI: FMZI(n),
+    SMZI: SMZI(n)
   };
 }
 
