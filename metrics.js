@@ -360,6 +360,139 @@ const maximumVertexDegree = memoize(function mvd(n) {
   return Math.max(maximumVertexDegree(a), maximumVertexDegree(b), numberOfPrimeFactors(a) + numberOfPrimeFactors(b));
 });
 
+function WienerIndex(n) {
+  if (n === 1) return 0;
+
+  if (isPrime(n)) {
+    const t = primePosition(n);
+    return WienerIndex(t) + pathLength(t) + edges(t) + 1;
+  } else {
+    const a = lowestFactor(n);
+    const b = n / a;
+    return WienerIndex(a) +
+           WienerIndex(b) +
+           (pathLength(a) * edges(b)) +
+           (pathLength(b) * edges(a));
+  }
+};
+
+function FirstZagrebIndex(n) {
+  if (n === 1) return 0;
+
+  if (isPrime(n)) {
+    const t = primePosition(n);
+    return FirstZagrebIndex(t) +
+           2 +
+           (2 * numberOfPrimeFactors(t));
+  } else {
+    const a = lowestFactor(n);
+    const b = n / a;
+    return FirstZagrebIndex(a) +
+           FirstZagrebIndex(b) -
+           Math.pow(numberOfPrimeFactors(a), 2) -
+           Math.pow(numberOfPrimeFactors(b), 2) +
+           Math.pow(numberOfPrimeFactors(n), 2);
+  }
+};
+
+function AlphaStatistic(n) {
+  if (n === 1) return 0;
+
+  if (isPrime(n)) {
+    const t = primePosition(n);
+    return 1 + numberOfPrimeFactors(t);
+  } else {
+    const a = lowestFactor(n);
+    const b = n / a;
+    return AlphaStatistic(a) + AlphaStatistic(b);
+  }
+};
+
+function SecondZagrebIndex(n) {
+  if (n === 1) return 0;
+
+  if (isPrime(n)) {
+    const t = primePosition(n);
+    return SecondZagrebIndex(t) +
+           AlphaStatistic(t) +
+           numberOfPrimeFactors(t) +
+           1;
+  } else {
+    const a = lowestFactor(n);
+    const b = n / a;
+    return SecondZagrebIndex(a) +
+           SecondZagrebIndex(b) +
+           (AlphaStatistic(a) * numberOfPrimeFactors(b)) +
+           (AlphaStatistic(b) * numberOfPrimeFactors(a));
+  }
+};
+
+function NarumiKatayama(n) {
+  if (n === 1) return 0;
+  if (n === 2) return 1;
+
+  if (isPrime(n) && primePosition(n) >= 2) {
+    const t = primePosition(n);
+    return NarumiKatayama(t) *
+           (1 + (1 / numberOfPrimeFactors(t)));
+  } else {
+    const a = lowestFactor(n);
+    const b = n / a;
+    return NarumiKatayama(a) *
+           NarumiKatayama(b) *
+           ((1 / numberOfPrimeFactors(a)) +
+            (1 / numberOfPrimeFactors(b)));
+  }
+};
+
+function FMZI(n) {
+  if (n === 1) return 0;
+  if (n === 2) return 1;
+
+  if (isPrime(n) && primePosition(n) >= 2) {
+    const t = primePosition(n);
+    return FMZI(t) *
+           Math.pow(
+             1 + (1 / numberOfPrimeFactors(t)),
+             2
+           );
+  } else {
+    const a = lowestFactor(n);
+    const b = n / a;
+    return FMZI(a) *
+           FMZI(b) *
+           Math.pow(
+             (1 / numberOfPrimeFactors(a)) +
+             (1 / numberOfPrimeFactors(b)),
+             2
+           );
+  }
+};
+
+function SMZI(n) {
+  if (n === 1) return 0;
+  if (n === 2) return 1;
+
+  if (isPrime(n) && primePosition(n) >= 2) {
+    const t = primePosition(n);
+    const k = numberOfPrimeFactors(t);
+    return (SMZI(t) / Math.pow(k, k)) *
+           Math.pow(1 + k, 1 + k);
+  } else {
+    const a = lowestFactor(n);
+    const b = n / a;
+    const fa = numberOfPrimeFactors(a);
+    const fb = numberOfPrimeFactors(b);
+    const fn = numberOfPrimeFactors(n);
+
+    return (SMZI(a) * SMZI(b) * Math.pow(fn, fn)) /
+           (Math.pow(fa, fa) * Math.pow(fb, fb));
+  }
+};
+
+
+
+
 // -----------------------------
 // Exported wrapper: computeAllMetrics(n)
 // -----------------------------
